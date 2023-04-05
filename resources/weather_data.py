@@ -3,22 +3,6 @@ from os import path
 import pandas as pd
 
 
-def convert_columns(df_in, column_names, convert_to):
-    new_df = pd.DataFrame(df_in)
-
-    if type(column_names) is str:
-        new_df[column_names] = df_in[column_names].str.replace(",", ".").astype(float)
-
-    elif type(column_names) is list:
-        for name in column_names:
-            new_df[name] = df_in[name].str.replace(",", ".").astype(float)
-
-    else:
-        raise TypeError("Incorrect value for 'column_names' parameter.")
-
-    return new_df
-
-
 class WeatherData:
     def __init__(self):
         self.data = None
