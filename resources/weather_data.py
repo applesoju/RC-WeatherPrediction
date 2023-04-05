@@ -75,3 +75,15 @@ class WeatherData:
         missing_values = self.data.isnull().any()
 
         self.cols_with_missing_data = self.data.columns[missing_values].tolist()
+
+    def column_summary(self, column_name):
+        print(f"Summary of column {column_name}:\n"
+              f"{self.data[column_name].isnull().sum()} missing values.\n"
+              f"{len(self.data[column_name][1].split(','))} elements in the column.\n"
+              f"Sample data from the colum:")
+
+        for sample in self.data[column_name].sample(5).tolist():
+            print(sample)
+
+    def get_timeseries(self, column_name, convert_to=None, scale_by=None):
+        raise NotImplementedError
