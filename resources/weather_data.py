@@ -60,11 +60,14 @@ class WeatherData:
 
         self.cols_with_missing_data = self.data.columns[missing_values].tolist()
 
-    def column_summary(self, column_name):
+    def column_summary(self, column_name, missing_data_ind=None):
         print(f"Summary of column '{column_name}':\n"
               f"{self.data[column_name].isnull().sum()} missing values.\n"
               f"{len(self.data[column_name][1].split(','))} elements in the column.\n"
               f"Sample data from the colum:")
+
+        if missing_data_ind is not None:
+            raise NotImplementedError
 
         for sample in self.data[column_name].sample(5).tolist():
             print(sample)
@@ -72,28 +75,41 @@ class WeatherData:
     def get_timeseries(self, column_name, get_elem=None, convert_to=None, scale_by=None, save_to_file=None):
         column_data = self.data[column_name].tolist()
 
+        # Get element
         try:
             timeseries = [i.split(",")[get_elem] for i in column_data] if get_elem is not None else column_data
-        except AttributeError:
-            print("Column type is not string and cannot be split.")
+        except (AttributeError, IndexError) as err:
+            print(f"Error: {err}\n"
+                  f"Column type is not string and cannot be split or the index is out of range.\n"
+                  f"Assuming whole attribute value as data.\n")
             timeseries = column_data
 
-        try:
-            timeseries = [convert_to(i) for i in timeseries if convert_to is not None]
-        except ValueError:
-            print(f"Column type cannot be converted to {convert_to.__name__}.")
+        # Type conversion
+        if convert_to is not None:
+            try:
+                timeseries = [convert_to(i) for i in timeseries]
+            except (ValueError, TypeError) as err:
+                print(f"Error: {err}\n"
+                      f"Column type cannot be converted to the given type.\n"
+                      f"Skipping conversion.\n")
 
-        try:
-            timeseries = [round(i * scale_by, 1) for i in timeseries if scale_by is not None]
-        except TypeError:
-            print(f"Column type does not allow multiplication.")
+        # Scale the data
+        if scale_by is not None:
+            try:
+                timeseries = [round(i * scale_by, 2) for i in timeseries]
+            except TypeError as err:
+                print(f"Error: {err}\n"
+                      f"Column type does not allow multiplication."
+                      f"Skipping scaling.\n")
 
+        # Save to file
         if save_to_file is not None:
-
-            if not path.exists(path.dirname(save_to_file)):
-                raise OSError("Target directory does not exist.")
-
-            with open(save_to_file, "w") as f:
-                f.write("\n".join([str(i) for i in timeseries]))
+            try:
+                with open(save_to_file, "w") as f:
+                    f.write("\n".join([str(i) for i in timeseries]))
+            except OSError as err:
+                print(f"Error: {err}\n"
+                      f"The target directory does not exist.\n"
+                      f"Skipping saving to file.\n")
 
         return timeseries
