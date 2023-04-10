@@ -2,6 +2,20 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 
+class SimpleESN:
+    def __init__(self):
+        self.input_size = None
+        self.output_size = None
+        self.reservoir_size = None
+        self.leaking_rate = None
+
+    def loadtxt(self, filepath):
+        raise NotImplementedError
+
+    def plot_data(self, lenght, labels):
+        raise NotImplementedError
+
+
 def simple_esn(timeseries_filepath, training_length, test_length, initial_length=100):
     data = np.loadtxt(timeseries_filepath)
 
