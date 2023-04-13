@@ -22,7 +22,7 @@ class WeatherData:
             raise FileNotFoundError("File doesn't exist.")
 
         try:
-            self.data = pd.read_csv(filepath)
+            self.data = pd.read_csv(filepath, dtype=str)
         except pd.errors.EmptyDataError:
             print("Incorrect file format or can't read csv.")
 
@@ -60,29 +60,44 @@ class WeatherData:
 
         self.cols_with_missing_data = self.data.columns[missing_values].tolist()
 
-    def column_summary(self, column_name, missing_data_ind=None):
+    def column_summary(self, column_name):
         print(f"Summary of column '{column_name}':\n"
               f"{self.data[column_name].isnull().sum()} missing values.\n"
               f"{len(self.data[column_name][1].split(','))} elements in the column.\n"
               f"Sample data from the colum:")
 
-        if missing_data_ind is not None:
-            raise NotImplementedError
-
         for sample in self.data[column_name].sample(5).tolist():
             print(sample)
 
-    def get_timeseries(self, column_name, get_elem=None, convert_to=None, scale_by=None, save_to_file=None):
+    def get_tmp_timeseries(self,
+                           column_name="TMP",
+                           check_missing=True,
+                           convert_to=None,
+                           scale_by=None,
+                           save_to_file=None):
+
         column_data = self.data[column_name].tolist()
+        timeseries = []
 
         # Get element
         try:
-            timeseries = [i.split(",")[get_elem] for i in column_data] if get_elem is not None else column_data
+            for i in column_data:
+
+                val, code = i.split(",")
+                timeseries.append(val if code == "1" else "+9999")
+
         except (AttributeError, IndexError) as err:
             print(f"Error: {err}\n"
                   f"Column type is not string and cannot be split or the index is out of range.\n"
                   f"Assuming whole attribute value as data.\n")
             timeseries = column_data
+
+        if check_missing:
+            mvi_count = timeseries.count("+9999")
+
+            if mvi_count > 0:
+                print(f"Warning: Missing value indicator ('+9999') found.\n"
+                      f"Number of missing values: {mvi_count}")
 
         # Type conversion
         if convert_to is not None:
@@ -99,7 +114,7 @@ class WeatherData:
                 timeseries = [round(i * scale_by, 2) for i in timeseries]
             except TypeError as err:
                 print(f"Error: {err}\n"
-                      f"Column type does not allow multiplication."
+                      f"Column type is not numeric."
                       f"Skipping scaling.\n")
 
         # Save to file
