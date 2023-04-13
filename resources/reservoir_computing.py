@@ -4,16 +4,58 @@ import numpy as np
 
 class SimpleESN:
     def __init__(self):
+        self.data = None
+
         self.input_size = None
         self.output_size = None
+
         self.reservoir_size = None
         self.leaking_rate = None
 
-    def loadtxt(self, filepath):
-        raise NotImplementedError
+    def loadtxt(self, filepath, missing_values=None):
+        try:
+            self.data = np.loadtxt(filepath)
+        except (ValueError, FileNotFoundError) as err:
+            print(f"Error: {err}\n"
+                  f"File does not exist or is not a txt.\n"
+                  f"No data loaded.\n")
+            exit(101)
 
-    def plot_data(self, lenght, labels):
-        raise NotImplementedError
+        if missing_values is not None:
+            if type(missing_values) is not int and type(missing_values) is not float:
+                raise TypeError("Error: parameter 'missing_values' has to be numeric.")
+
+            for i, val in enumerate(self.data):
+                if val == missing_values:
+
+                    next_ind = i + 1
+                    next_value = self.data[next_ind]
+
+                    while next_value == missing_values:
+                        next_ind += 1
+                        next_value = self.data[next_ind]
+
+                    new_values = np.linspace(self.data[i - 1], self.data[next_ind], next_ind - i + 2)
+                    self.data[i: next_ind] = new_values[1: -1]
+
+    def plot_data(self, labels=None, length=None):
+        if self.data is None:
+            raise TypeError("Error: data has not been loaded.")
+
+        if length is None:
+            length = len(self.data)
+
+        plt.figure(figsize=(20, 12)).clear()
+        plt.plot(self.data[:length])
+        plt.title("Sample of loaded data", fontsize=20)
+
+        if labels is not None and len(labels) == 2:
+            plt.xlabel(labels[0], fontsize=16)
+            plt.ylabel(labels[1], fontsize=16)
+            plt.xticks(fontsize=12)
+            plt.yticks(fontsize=12)
+
+        plt.show()
 
 
 def simple_esn(timeseries_filepath, training_length, test_length, initial_length=100):
@@ -41,7 +83,7 @@ def simple_esn(timeseries_filepath, training_length, test_length, initial_length
     spectral_radius = max(abs(np.linalg.eig(reservoir_weights)[0]))
     print(f"Computed spectral radius: {spectral_radius}")
 
-    reservoir_weights *= 1.25 / spectral_radius     # TODO: ?????
+    reservoir_weights *= 1.25 / spectral_radius  # TODO: ?????
 
     x_out = np.zeros((1 + input_size + reservoir_size,
                       training_length - initial_length))
@@ -69,7 +111,7 @@ def simple_esn(timeseries_filepath, training_length, test_length, initial_length
                                    np.dot(reservoir_weights, x))
         y = np.dot(output_weights, np.vstack((1, u, x)))
         y_test[:, t] = y
-        u = y                               # generative mode
+        u = y  # generative mode
         # u = data[training_length + 1]     # predictive mode
 
     error_length = 500
