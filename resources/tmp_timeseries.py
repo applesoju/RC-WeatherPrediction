@@ -74,14 +74,22 @@ class TmpTimeseries:
 
         return processed_df
 
-    def handle_missing_vals_in_tmp_df(self, tmp_df):    # TODO
-        raise NotImplementedError
+    @staticmethod
+    def handle_missing_vals_in_tmp_df(tmp_df):
+        no_missing_df = tmp_df.copy()
+
+        for index, row in tmp_df.iterrows():
+            if row["TMP"] == 999.9:
+                no_missing_df.at[index, "TMP"] = no_missing_df.iloc[index - 1]["TMP"]
+
+        return no_missing_df
 
     def normalize_tmp_df(self, tmp_df):
         year_range = list(range(self.starting_date[0], self.ending_date[0] + 1))
 
         norm_df = pd.DataFrame(columns=["YEAR", "MONTH", "DAY", "HOUR", "TMP"])
 
+        prev_tmp = None
         for year in year_range:
             dim = list(DAYS_IN_MONTHS)
 
@@ -98,12 +106,14 @@ class TmpTimeseries:
                             (tmp_df["DAY"] == day + 1) &
                             (tmp_df["HOUR"] == hour) &
                             (tmp_df["MINUTE"] == 0)
-                        ]["TMP"]
+                            ]["TMP"]
 
                         if 999.9 in list(tmp_val):
                             tmp_val = [t for t in tmp_val if t != 999.9]
                         if len(tmp_val) == 0:
-                            tmp_val = [999.9]
+                            tmp_val = prev_tmp
+
+                        prev_tmp = tmp_val
                         tmp_val = sum(tmp_val) / len(tmp_val)
 
                         new_row = pd.Series({
@@ -117,6 +127,7 @@ class TmpTimeseries:
 
                 print(f"Year {year}, {month + 1} month done.")
 
+        norm_df = self.handle_missing_vals_in_tmp_df(norm_df)
         norm_df = norm_df.astype({
             "YEAR": int,
             "MONTH": int,
