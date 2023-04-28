@@ -74,18 +74,18 @@ class SimpleESN:
         rho = max(abs(np.linalg.eig(self.reservoir)[0]))
         self.reservoir *= self.spectral_radius / rho
 
-    def train(self, initial_length, training_length):
-        x_out = np.zeros((1 + self.input_size + self.reservoir_size, training_length - initial_length))
-        y_target = self.data[None, initial_length + 1: training_length + 1]
+    def train(self, training_length):
+        x_out = np.zeros((1 + self.input_size + self.reservoir_size, training_length))
+        y_target = self.data[None, 1: training_length + 1]
         x = np.zeros((self.reservoir_size, 1))
 
-        for t in range(initial_length, training_length):
+        for t in range(training_length):
             u = self.data[t]
             x = (1 - self.leaking_rate) * x + self.leaking_rate * \
                 np.tanh(np.dot(self.input_weights, np.vstack((1, u))) +
                         np.dot(self.reservoir, x))
 
-            x_out[:, t - initial_length] = np.vstack((1, u, x))[:, 0]
+            x_out[:, t] = np.vstack((1, u, x))[:, 0]
 
         reg_coeff = 1e-8
         self.output_weigths = np.linalg.solve(
