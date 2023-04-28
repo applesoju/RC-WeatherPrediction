@@ -1,6 +1,7 @@
 from os import path
 
 import pandas as pd
+import numpy as np
 
 DAYS_IN_MONTHS = (31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31)
 HOURS_RANGE = tuple(range(0, 24))
@@ -36,7 +37,7 @@ class TmpTimeseries:
 
         return csv_data[column_names]
 
-    def process_tmp_dataframe(self, tmp_df):
+    def _process_tmp_dataframe(self, tmp_df):
         dates = list(tmp_df["DATE"])
 
         dates_with_time = [i.split("T") for i in dates]
@@ -75,7 +76,7 @@ class TmpTimeseries:
         return processed_df
 
     @staticmethod
-    def handle_missing_vals_in_tmp_df(tmp_df):
+    def _handle_missing_vals_in_tmp_df(tmp_df):
         no_missing_df = tmp_df.copy()
 
         for index, row in tmp_df.iterrows():
@@ -84,7 +85,7 @@ class TmpTimeseries:
 
         return no_missing_df
 
-    def normalize_tmp_df(self, tmp_df):
+    def _normalize_tmp_df(self, tmp_df):
         year_range = list(range(self.starting_date[0], self.ending_date[0] + 1))
 
         norm_df = pd.DataFrame(columns=["YEAR", "MONTH", "DAY", "HOUR", "TMP"])
@@ -127,7 +128,6 @@ class TmpTimeseries:
 
                 print(f"Year {year}, {month + 1} month done.")
 
-        norm_df = self.handle_missing_vals_in_tmp_df(norm_df)
         norm_df = norm_df.astype({
             "YEAR": int,
             "MONTH": int,
@@ -136,4 +136,20 @@ class TmpTimeseries:
             "TMP": float
         })
 
+        self.data = norm_df
+
         return norm_df
+
+    def get_tmp_dataframe(self, tmp_df):
+        if self.data is None:
+            tmp_df = self._process_tmp_dataframe(tmp_df)
+            tmp_df = self._handle_missing_vals_in_tmp_df(tmp_df)
+            self._normalize_tmp_df(tmp_df)
+
+        return self.data
+
+    def get_tmp_timeseries(self, tmp_df):
+        if self.data is None:
+            self.get_tmp_dataframe(tmp_df)
+
+        return np.array(self.data["TMP"])
