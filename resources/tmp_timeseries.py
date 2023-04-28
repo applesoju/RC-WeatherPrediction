@@ -152,4 +152,30 @@ class TmpTimeseries:
         if self.data is None:
             self.get_tmp_dataframe(tmp_df)
 
-        return np.array(self.data["TMP"])
+        return self.data["TMP"].values.tolist()
+
+    def save_csv(self, filepath):
+        if self.data is None:
+            raise ValueError("Error: no data loaded.")
+
+        try:
+            self.data.to_csv(filepath, index=False)
+        except OSError as err:
+            print(f"Error: {err}\n"
+                  f"The target directory does not exist.\n"
+                  f"Skipping saving to csv file.")
+
+    def save_txt(self, filepath):
+        if self.data is None:
+            raise ValueError("Error: no data loaded.")
+
+        try:
+            timeseries = self.data["TMP"].values.tolist()
+            with open(filepath, "w") as f:
+                f.write("\n".join([str(i) for i in timeseries]))
+
+        except OSError as err:
+            print(f"Error: {err}\n"
+                  f"The target directory does not exist.\n"
+                  f"Skipping saving to txt file.")
+
