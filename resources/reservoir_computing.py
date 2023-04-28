@@ -97,9 +97,9 @@ class SimpleESN:
 
         return x
 
-    def predict(self, test_length, training_length, initial_length, last_x, mode, save_to_file=None):
+    def predict(self, test_length, training_length, last_x, mode, save_to_file=None):
         y_test = np.zeros((self.output_size, test_length))
-        u = self.data[training_length + initial_length]
+        u = self.data[training_length]
         x = last_x
         u1 = u2 = u
 
@@ -114,7 +114,7 @@ class SimpleESN:
                 case "g":
                     u = y
                 case "p":
-                    u = self.data[training_length + initial_length + t + 1]
+                    u = self.data[training_length + t + 1]
                 case _:
                     raise ValueError("Error: parameter 'mode' has to be either 'g' for 'generative'"
                                      "or 'p' for 'predictive.")
