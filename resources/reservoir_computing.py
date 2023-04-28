@@ -19,7 +19,7 @@ class SimpleESN:
         self.output_weigths = None
         self.x_out = None
 
-    def loadtxt(self, filepath, missing_values=None, save_to_file=None):
+    def loadtxt(self, filepath):
         try:
             self.data = np.loadtxt(filepath)
         except (ValueError, FileNotFoundError) as err:
@@ -27,32 +27,6 @@ class SimpleESN:
                   f"File does not exist or is not a txt.\n"
                   f"No data loaded.\n")
             exit(101)
-
-        if missing_values is not None:
-            if type(missing_values) is not int and type(missing_values) is not float:
-                raise TypeError("Error: parameter 'missing_values' has to be numeric.")
-
-            for i, val in enumerate(self.data):
-                if val == missing_values:
-
-                    next_ind = i + 1
-                    next_value = self.data[next_ind]
-
-                    while next_value == missing_values:
-                        next_ind += 1
-                        next_value = self.data[next_ind]
-
-                    new_values = np.linspace(self.data[i - 1], self.data[next_ind], next_ind - i + 2)
-                    self.data[i: next_ind] = new_values[1: -1]
-
-        if save_to_file is not None:
-            try:
-                with open(save_to_file, "w") as f:
-                    f.write("\n".join([str(i) for i in self.data]))
-            except OSError as err:
-                print(f"Error: {err}\n"
-                      f"The target directory does not exist.\n"
-                      f"Skipping saving to file.\n")
 
     def plot_data(self, labels=None, length=None):
         if self.data is None:
