@@ -101,7 +101,6 @@ class SimpleESN:
         y_test = np.zeros((self.output_size, test_length))
         u = self.data[training_length]
         x = last_x
-        u1 = u2 = u
 
         for t in range(test_length):
             x = (1 - self.leaking_rate) * x + self.leaking_rate * \
@@ -144,17 +143,17 @@ class SimpleESN:
 
         plt.show()
 
-    def plot_prediction_with_error(self, prediction, initial_length, training_length, test_length):
+    def plot_prediction_with_error(self, prediction, training_length, test_length):
 
-        err = np.square(self.data[training_length + initial_length + 1:
-                                  training_length + initial_length + test_length + 1] - prediction[0])
+        err = np.square(self.data[training_length + 1:
+                                  training_length + test_length + 1] - prediction[0])
         mse = sum(err) / test_length
 
         print(f"MSE: {mse}")
 
         plt.figure(4, figsize=(20, 12)).clear()
-        plt.plot(self.data[training_length + initial_length + 1:
-                           training_length + initial_length + test_length + 1], "g")
+        plt.plot(self.data[training_length + 1:
+                           training_length + test_length + 1], "g")
         plt.plot(prediction.T, "b")
         plt.title("Target and generated signals")
         plt.legend(["Target signal", "Predicted signal"])
@@ -172,4 +171,3 @@ class SimpleESN:
         plt.title(r"MSE")
 
         plt.show()
-
