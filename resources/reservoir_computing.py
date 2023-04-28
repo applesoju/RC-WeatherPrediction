@@ -23,10 +23,21 @@ class SimpleESN:
         try:
             self.data = np.loadtxt(filepath)
         except (ValueError, FileNotFoundError) as err:
-            print(f"Error: {err}\n"
-                  f"File does not exist or is not a txt.\n"
-                  f"No data loaded.\n")
-            exit(101)
+            print(f"Error: {err}")
+
+            match type(err).__name__:
+
+                case "ValueError":
+                    print(f"Filepath provided is not a string or the file is not a txt.")
+
+                case "FileNotFoundError":
+                    print(f"Provided file does not exist.")
+
+                case _:
+                    print(f"Unknown error occured.")
+
+            print(f"No data loaded.\n")
+            exit(-101)
 
     def plot_data(self, labels=None, length=None):
         if self.data is None:
