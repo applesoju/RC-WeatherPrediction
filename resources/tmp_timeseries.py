@@ -160,10 +160,21 @@ class TmpTimeseries:
 
         try:
             self.data.to_csv(filepath, index=False)
-        except OSError as err:
-            print(f"Error: {err}\n"
-                  f"The target directory does not exist.\n"
-                  f"Skipping saving to csv file.")
+        except (OSError, ValueError) as err:
+            print(f"Error: {err}")
+
+            match type(err).__name__:
+
+                case "ValueError":
+                    print(f"Filepath provied is not a string.")
+
+                case "OSError":
+                    print(f"The target directory does not exist.")
+
+                case _:
+                    print(f"Unknown error occured.")
+
+            print(f"Skipping saving to csv file.\n")
 
     def save_txt(self, filepath):
         if self.data is None:
@@ -177,5 +188,5 @@ class TmpTimeseries:
         except OSError as err:
             print(f"Error: {err}\n"
                   f"The target directory does not exist.\n"
-                  f"Skipping saving to txt file.")
+                  f"Skipping saving to txt file.\n")
 
