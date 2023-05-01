@@ -20,6 +20,7 @@ class SimpleESN:
         self.x_out = None
 
     def loadtxt(self, filepath):
+        print("Loading data from txt file...")
         try:
             self.data = np.loadtxt(filepath)
         except (ValueError, FileNotFoundError) as err:
@@ -97,7 +98,9 @@ class SimpleESN:
 
         return x
 
-    def predict(self, test_length, training_length, last_x, mode, save_to_file=None):
+    def predict(self, test_length, training_length, last_x, save_to_file=None):
+        print("Model is generating a prediction...")
+
         y_test = np.zeros((self.output_size, test_length))
         u = self.data[training_length]
         x = last_x
@@ -109,14 +112,7 @@ class SimpleESN:
             y = np.dot(self.output_weigths, np.vstack((1, u, x)))
             y_test[:, t] = y
 
-            match mode:
-                case "g":
-                    u = y
-                case "p":
-                    u = self.data[training_length + t + 1]
-                case _:
-                    raise ValueError("Error: parameter 'mode' has to be either 'g' for 'generative'"
-                                     "or 'p' for 'predictive.")
+            u = self.data[training_length + t + 1]
 
         if save_to_file is not None:
             try:
