@@ -1,5 +1,6 @@
 import numpy as np
 from sklearn.model_selection import TimeSeriesSplit
+from sklearn.metrics import r2_score, mean_squared_error, mean_absolute_error
 
 
 class ModelEvaluation:
@@ -41,5 +42,15 @@ class ModelEvaluation:
             print(f"No data loaded.\n")
             exit(-101)
 
-    def cross_validate(self):
-        raise NotImplementedError
+    def generate_prediction(self, training_lenght, test_lenght):
+        self.model.train(training_length=training_lenght)
+        y_pred = self.model.predict(training_length=training_lenght,
+                                    test_lenght=test_lenght)
+        return y_pred
+
+    def cross_validate(self, n_of_splits):
+        ts_split = TimeSeriesSplit(n_splits=n_of_splits)
+
+        for train_idx, valid_idx in ts_split.split(self.target_ts):
+            train, valid = self.target_ts.iloc[train_idx], self.target_ts.iloc[valid_idx]
+            raise NotImplementedError
