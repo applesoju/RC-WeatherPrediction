@@ -1,7 +1,6 @@
 from os import path
 
 import pandas as pd
-import numpy as np
 
 DAYS_IN_MONTHS = (31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31)
 HOURS_RANGE = tuple(range(0, 24))
@@ -189,4 +188,3 @@ class TmpTimeseries:
             print(f"Error: {err}\n"
                   f"The target directory does not exist.\n"
                   f"Skipping saving to txt file.\n")
-

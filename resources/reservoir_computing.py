@@ -60,6 +60,8 @@ class SimpleESN:
         plt.show()
 
     def initialize_reservoir(self, input_size, reservoir_size, leaking_rate, spectral_radius, seed=None):
+        print("Initializing reservoir...")
+
         self.input_size = input_size
         self.output_size = self.input_size
         self.reservoir_size = reservoir_size
@@ -112,7 +114,8 @@ class SimpleESN:
             y = np.dot(self.output_weigths, np.vstack((1, u, x)))
             y_test[:, t] = y
 
-            u = self.data[training_length + t + 1]
+            if t + 1 != test_length:
+                u = self.data[training_length + t + 1]
 
         if save_to_file is not None:
             try:
@@ -123,7 +126,7 @@ class SimpleESN:
                       f"The target directory does not exist.\n"
                       f"Skipping saving to file.\n")
 
-        return y_test
+        return y_test[0]
 
     def plot_reservoir_activations(self, xlen, ylen):
         plt.figure(2, figsize=(20, 12)).clear()
