@@ -1,56 +1,65 @@
-import numpy as np
-from sklearn.model_selection import TimeSeriesSplit
 from sklearn.metrics import r2_score, mean_squared_error, mean_absolute_error
 
 
 class ModelEvaluation:
-    def __init__(self, model, target_ts=None):
+    def __init__(self, model, model_params):
         self.model = model
+        self.model_params = model_params
 
-        match type(target_ts).__name__:
+        self.mse = None
+        self.mae = None
+        self.r2 = None
 
-            case "NoneType":
-                print("Warning: no timeseries provided.")
+    def _reset_errors(self):
+        self.mse = []
+        self.mae = []
+        self.r2 = []
 
-            case "str":
-                self.loadtxt(target_ts)
+    def _time_series_split(self, n_of_splits):
+        data_len = len(self.model.data)
+        split_len = data_len // (n_of_splits + 1)
+        remaining_data_len = data_len % (n_of_splits + 1)
 
-            case "list":
-                self.target_ts = target_ts
+        first_split_len = split_len + remaining_data_len
+        train_valid_splits = [(first_split_len + n * split_len, split_len) for n in range(n_of_splits)]
 
-            case _:
-                self.target_ts = None
-                print("Error: provided parameter is not a list or a filepath.")
+        return train_valid_splits
 
-    def loadtxt(self, filepath):
-        try:
-            self.target_ts = np.loadtxt(filepath)
-        except (ValueError, FileNotFoundError) as err:
-            print(f"Error: {err}")
+    def initialize_model(self):
+        self.model.initialize_reservoir(*self.model_params)
 
-            match type(err).__name__:
+    def generate_prediction(self, training_length, test_length):
+        self.initialize_model()
 
-                case "ValueError":
-                    print(f"Filepath provided is not a string or the file is not a txt.")
-
-                case "FileNotFoundError":
-                    print(f"Provided file does not exist.")
-
-                case _:
-                    print(f"Unknown error occured.")
-
-            print(f"No data loaded.\n")
-            exit(-101)
-
-    def generate_prediction(self, training_lenght, test_lenght):
-        self.model.train(training_length=training_lenght)
-        y_pred = self.model.predict(training_length=training_lenght,
-                                    test_lenght=test_lenght)
+        last_x = self.model.train(training_length=training_length)
+        y_pred = self.model.predict(training_length=training_length,
+                                    last_x=last_x,
+                                    test_length=test_length)
         return y_pred
 
-    def cross_validate(self, n_of_splits):
-        ts_split = TimeSeriesSplit(n_splits=n_of_splits)
+    def _save_mse_to_file(self):
+        raise NotImplementedError
 
-        for train_idx, valid_idx in ts_split.split(self.target_ts):
-            train, valid = self.target_ts.iloc[train_idx], self.target_ts.iloc[valid_idx]
-            raise NotImplementedError
+    def _save_mae_to_file(self):
+        raise NotImplementedError
+
+    def _save_r2_to_file(self):
+        raise NotImplementedError
+
+    def cross_validate(self, n_of_splits, save_results_in_dir=None):
+        print("Cross validation in progress...")
+        self._reset_errors()
+        ts_split = self._time_series_split(n_of_splits)
+
+        for train_len, valid_len in ts_split:
+
+            y_true = self.model.data[train_len: train_len + valid_len]
+            y_pred = self.generate_prediction(training_length=train_len,
+                                              test_length=valid_len)
+
+            self.mse.append(mean_squared_error(y_true, y_pred))
+            self.mae.append(mean_absolute_error(y_true, y_pred))
+            self.r2.append(r2_score(y_true, y_pred))
+
+            if save_results_in_dir is not None:
+                raise NotImplementedError
