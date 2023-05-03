@@ -10,15 +10,13 @@ class TmpTimeseries:
     def __init__(self):
         self.input_filename = None
 
-        self.station_id = None
-        self.station_name = None
-
         self.starting_date = None
         self.ending_date = None
 
         self.data = None
 
     def load_csv(self, filepath, column_names):
+        print("Loading data from csv file...")
         csv_data = None
 
         self.input_filename = path.basename(filepath)
@@ -30,9 +28,6 @@ class TmpTimeseries:
             csv_data = pd.read_csv(filepath, dtype=str)
         except pd.errors.EmptyDataError:
             print("Error: Incorrect file format or can't read csv.")
-
-        self.station_id = csv_data["STATION"].iloc[1]
-        self.station_name = csv_data["NAME"].iloc[1]
 
         return csv_data[column_names]
 
@@ -84,8 +79,12 @@ class TmpTimeseries:
 
         return no_missing_df
 
-    def _normalize_tmp_df(self, tmp_df):
-        year_range = list(range(self.starting_date[0], self.ending_date[0] + 1))
+    def _normalize_tmp_df(self, tmp_df, restrain_year_range):
+        if restrain_year_range is None:
+            year_range = list(range(self.starting_date[0], self.ending_date[0] + 1))
+
+        else:
+            year_range = list(range(restrain_year_range[0], restrain_year_range[1] + 1))
 
         norm_df = pd.DataFrame(columns=["YEAR", "MONTH", "DAY", "HOUR", "TMP"])
 
@@ -139,11 +138,13 @@ class TmpTimeseries:
 
         return norm_df
 
-    def get_tmp_dataframe(self, tmp_df):
+    def get_tmp_dataframe(self, tmp_df, restrain_year_range=None):
+        print("Processing data into a timeseries...")
+
         if self.data is None:
             tmp_df = self._process_tmp_dataframe(tmp_df)
             tmp_df = self._handle_missing_vals_in_tmp_df(tmp_df)
-            self._normalize_tmp_df(tmp_df)
+            self._normalize_tmp_df(tmp_df, restrain_year_range)
 
         return self.data
 
