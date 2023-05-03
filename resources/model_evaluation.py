@@ -53,7 +53,7 @@ class ModelEvaluation:
                   f"The target directory does not exist.\n"
                   f"Skipping saving to file.\n")
 
-    def cross_validate(self, n_of_splits, save_results_to_file=None):
+    def cross_validate(self, n_of_splits, save_results_to_file=None, save_models_to_dir=None):
         print("Starting cross-validation...")
 
         self._reset_errors()
@@ -70,6 +70,15 @@ class ModelEvaluation:
             self.r2.append(r2_score(y_true, y_pred))
 
             i += 1
+
+            if save_models_to_dir is not None:
+                print("Saving model for current split to file...")
+
+                filename = f"model_{i:03d}.json"
+                filepath = f"{save_models_to_dir}/{filename}"
+
+                self.model.save_reservoir_to_file(filepath)
+
             print(f"Split {i} out of {len(ts_split)} done.\n")
 
         if save_results_to_file is not None:
