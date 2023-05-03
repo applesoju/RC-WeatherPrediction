@@ -1,3 +1,4 @@
+import pandas as pd
 from sklearn.metrics import r2_score, mean_squared_error, mean_absolute_error
 
 
@@ -37,17 +38,21 @@ class ModelEvaluation:
                                     test_length=test_length)
         return y_pred
 
-    def _save_mse_to_file(self):
-        raise NotImplementedError
+    def _save_metrics_to_file(self, filepath):
+        try:
+            metrics_df = pd.DataFrame({
+                "mse": self.mse,
+                "mae": self.mae,
+                "r2": self.r2
+            })
+            metrics_df.to_csv(filepath, index=False)
 
-    def _save_mae_to_file(self):
-        raise NotImplementedError
+        except OSError as err:
+            print(f"Error: {err}\n"
+                  f"The target directory does not exist.\n"
+                  f"Skipping saving to file.\n")
 
-    def _save_r2_to_file(self):
-        raise NotImplementedError
-
-    def cross_validate(self, n_of_splits, save_results_in_dir=None):
-        print("Cross validation in progress...")
+    def cross_validate(self, n_of_splits, save_results_to_file=None):
         self._reset_errors()
         ts_split = self._time_series_split(n_of_splits)
 
@@ -61,5 +66,5 @@ class ModelEvaluation:
             self.mae.append(mean_absolute_error(y_true, y_pred))
             self.r2.append(r2_score(y_true, y_pred))
 
-            if save_results_in_dir is not None:
-                raise NotImplementedError
+        if save_results_to_file is not None:
+            self._save_metrics_to_file(save_results_to_file)
