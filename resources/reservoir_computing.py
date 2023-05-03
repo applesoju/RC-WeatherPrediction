@@ -1,6 +1,7 @@
+import json
+
 import matplotlib.pyplot as plt
 import numpy as np
-import json
 
 
 class SimpleESN:
@@ -145,7 +146,7 @@ class SimpleESN:
                   f"The target directory does not exist.\n"
                   f"Skipping saving to file.\n")
 
-    def load_reservoir_from_file(self, filepath):
+    def load_reservoir_from_file(self, filepath):  # TODO
         raise NotImplementedError
 
     def plot_reservoir_activations(self, xlen, ylen):
@@ -187,6 +188,6 @@ class SimpleESN:
         plt.plot(err)
         plt.yscale("linear")
 
-        plt.title(r"MSE")
+        plt.title("MSE")
 
         plt.show()
