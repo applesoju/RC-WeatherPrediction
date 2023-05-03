@@ -134,11 +134,11 @@ class SimpleESN:
             with open(filepath, "w") as f:
                 model_dict = {
                     "leaking_rate": self.leaking_rate,
-                    "input_weights": self.input_weights,
-                    "reservoir": self.reservoir,
-                    "output_weigths": self.output_weigths
+                    "input_weights": self.input_weights.tolist(),
+                    "reservoir": self.reservoir.tolist(),
+                    "output_weigths": self.output_weigths.tolist()
                 }
-                json.dump(model_dict, filepath)
+                json.dump(model_dict, f)
 
         except OSError as err:
             print(f"Error: {err}\n"
