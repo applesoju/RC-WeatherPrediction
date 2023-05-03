@@ -1,6 +1,9 @@
 import matplotlib.pyplot as plt
 import pandas as pd
+import seaborn as sns
 from sklearn.metrics import r2_score, mean_squared_error, mean_absolute_error
+
+sns.set()
 
 
 class ModelEvaluation:
@@ -53,7 +56,7 @@ class ModelEvaluation:
                   f"The target directory does not exist.\n"
                   f"Skipping saving to file.\n")
 
-    def cross_validate(self, n_of_splits, save_results_to_file=None, save_models_to_dir=None):
+    def cross_validate(self, n_of_splits, save_results_to_file=None, save_models_to_dir=None, save_models="last"):
         print("Starting cross-validation...")
 
         self._reset_errors()
@@ -71,7 +74,7 @@ class ModelEvaluation:
 
             i += 1
 
-            if save_models_to_dir is not None:
+            if save_models_to_dir is not None and save_models == "all":
                 print("Saving model for current split to file...")
 
                 filename = f"model_{i:03d}.json"
@@ -80,6 +83,10 @@ class ModelEvaluation:
                 self.model.save_reservoir_to_file(filepath)
 
             print(f"Split {i} out of {len(ts_split)} done.\n")
+
+        if save_models_to_dir is not None and save_models == "last":
+            print("Saving last model to file...")
+            self.model.save_reservoir_to_file(f"{save_models_to_dir}/last_model.json")
 
         if save_results_to_file is not None:
             self._save_metrics_to_file(save_results_to_file)
@@ -90,17 +97,24 @@ class ModelEvaluation:
                   f"Skipping plotting metrics.")
 
         plt.figure(6, figsize=(20, 12)).clear()
-
-        plt.subplot(311)
-        plt.plot(self.mse)
+        sns.lineplot(self.mse)
         plt.title("Mean Square Error")
+        for i, val in enumerate(self.mse):
+            label = round(val, 2)
+            plt.annotate(label, (i, val))
 
-        plt.subplot(312)
-        plt.plot(self.mae)
+        plt.figure(7, figsize=(20, 12)).clear()
+        sns.lineplot(self.mae)
         plt.title("Mean Absolute Error")
+        for i, val in enumerate(self.mae):
+            label = round(val, 2)
+            plt.annotate(label, (i, val))
 
-        plt.subplot(313)
-        plt.plot(self.r2)
+        plt.figure(8, figsize=(20, 12)).clear()
+        sns.lineplot(self.r2)
         plt.title("R2 Score")
+        for i, val in enumerate(self.r2):
+            label = round(val, 2)
+            plt.annotate(label, (i, val))
 
         plt.show()
