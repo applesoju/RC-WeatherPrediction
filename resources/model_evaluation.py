@@ -1,3 +1,4 @@
+import matplotlib.pyplot as plt
 import pandas as pd
 from sklearn.metrics import r2_score, mean_squared_error, mean_absolute_error
 
@@ -53,11 +54,13 @@ class ModelEvaluation:
                   f"Skipping saving to file.\n")
 
     def cross_validate(self, n_of_splits, save_results_to_file=None):
+        print("Starting cross-validation...")
+
         self._reset_errors()
         ts_split = self._time_series_split(n_of_splits)
 
+        i = 0
         for train_len, valid_len in ts_split:
-
             y_true = self.model.data[train_len: train_len + valid_len]
             y_pred = self.generate_prediction(training_length=train_len,
                                               test_length=valid_len)
@@ -66,5 +69,29 @@ class ModelEvaluation:
             self.mae.append(mean_absolute_error(y_true, y_pred))
             self.r2.append(r2_score(y_true, y_pred))
 
+            i += 1
+            print(f"Split {i} out of {len(ts_split)} done.\n")
+
         if save_results_to_file is not None:
             self._save_metrics_to_file(save_results_to_file)
+
+    def plot_metrics(self):
+        if self.mse is None:
+            print(f"Error: metrics have not been generated.\n"
+                  f"Skipping plotting metrics.")
+
+        plt.figure(6, figsize=(20, 12)).clear()
+
+        plt.subplot(311)
+        plt.plot(self.mse)
+        plt.title("Mean Square Error")
+
+        plt.subplot(312)
+        plt.plot(self.mae)
+        plt.title("Mean Absolute Error")
+
+        plt.subplot(313)
+        plt.plot(self.r2)
+        plt.title("R2 Score")
+
+        plt.show()
