@@ -1,5 +1,6 @@
 import matplotlib.pyplot as plt
 import numpy as np
+import json
 
 
 class SimpleESN:
@@ -127,6 +128,25 @@ class SimpleESN:
                       f"Skipping saving to file.\n")
 
         return y_test[0]
+
+    def save_reservoir_to_file(self, filepath):
+        try:
+            with open(filepath, "w") as f:
+                model_dict = {
+                    "leaking_rate": self.leaking_rate,
+                    "input_weights": self.input_weights,
+                    "reservoir": self.reservoir,
+                    "output_weigths": self.output_weigths
+                }
+                json.dump(model_dict, filepath)
+
+        except OSError as err:
+            print(f"Error: {err}\n"
+                  f"The target directory does not exist.\n"
+                  f"Skipping saving to file.\n")
+
+    def load_reservoir_from_file(self, filepath):
+        raise NotImplementedError
 
     def plot_reservoir_activations(self, xlen, ylen):
         plt.figure(2, figsize=(20, 12)).clear()
