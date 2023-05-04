@@ -113,7 +113,9 @@ class TmpTimeseries:
                             tmp_val = prev_tmp
 
                         prev_tmp = tmp_val
-                        tmp_val = sum(tmp_val) / len(tmp_val)
+
+                        if tmp_val is not None:
+                            tmp_val = sum(tmp_val) / len(tmp_val)
 
                         new_row = pd.Series({
                             "YEAR": year,
@@ -133,6 +135,13 @@ class TmpTimeseries:
             "HOUR": int,
             "TMP": float
         })
+        norm_df = norm_df.reset_index(drop=True)
+
+        first_val_idx = norm_df["TMP"].notna().idxmax()
+        first_val = norm_df.iloc[first_val_idx]["TMP"]
+
+        for i in range(first_val_idx):
+            norm_df.loc[i, "TMP"] = first_val
 
         self.data = norm_df
 
