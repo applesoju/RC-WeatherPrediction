@@ -54,7 +54,7 @@ class ModelEvaluation:
         except OSError as err:
             print(f"Error: {err}\n"
                   f"The target directory does not exist.\n"
-                  f"Skipping saving to file.\n")
+                  f"Skipping saving to file.")
 
     def cross_validate(self, n_of_splits, save_results_to_file=None, save_models_to_dir=None, save_models="last"):
         print("Starting cross-validation...")
