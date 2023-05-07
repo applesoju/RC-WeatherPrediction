@@ -137,7 +137,7 @@ class SimpleESN:
                     "input_weights": self.input_weights.tolist(),
                     "reservoir": self.reservoir.tolist(),
                     "output_weights": self.output_weights.tolist(),
-                    "last_x": self.x_last.tolist(),
+                    "x_last": self.x_last.tolist(),
                     "training_length": self.training_length
                 }
                 json.dump(model_dict, f)
@@ -153,12 +153,12 @@ class SimpleESN:
             with open(filepath, "r") as f:
                 json_data = json.load(f)
 
-                self.input_weights = np.array(json_data["input_weights"])
+                self.training_length = json_data["training_length"]
                 self.leaking_rate = json_data["leaking_rate"]
+                self.input_weights = np.array(json_data["input_weights"])
                 self.output_weights = np.array(json_data["output_weights"])
                 self.reservoir = np.array(json_data["reservoir"])
                 self.x_last = np.array(json_data["x_last"])
-                self.training_length = json_data["training_length"]
 
         except OSError as err:
             print(f"Error: {err}\n"
