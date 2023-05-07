@@ -1,3 +1,7 @@
+import itertools
+import os.path
+import subprocess
+
 import matplotlib.pyplot as plt
 import pandas as pd
 import seaborn as sns
@@ -37,9 +41,8 @@ class ModelEvaluation:
         self.initialize_model()
 
         self.model.train(training_length=training_length)
-        y_pred = self.model.predict(training_length=training_length,
-                                    last_x=last_x,
-                                    test_length=test_length)
+        y_pred = self.model.predict(test_length=test_length)
+
         return y_pred
 
     def _save_metrics_to_file(self, filepath):
@@ -86,7 +89,7 @@ class ModelEvaluation:
 
         if save_models_to_dir is not None and save_models == "last":
             print("Saving last model to file...")
-            self.model.save_reservoir_to_file(f"{save_models_to_dir}/last_model.json")
+            self.model.save_reservoir_to_file(f"{save_models_to_dir}/model.json")
 
         if save_results_to_file is not None:
             self._save_metrics_to_file(save_results_to_file)
@@ -120,5 +123,27 @@ class ModelEvaluation:
 
         plt.show()
 
-    def grid_search(self, params):
-        raise NotImplementedError
+    def grid_search(self, params, dirpath):
+        combos = itertools.product(*list(params.values()))
+
+        if not os.path.exists(dirpath):
+            raise FileNotFoundError("Directory not found.\n"
+                                    "Aborting grid search.")
+
+        for combo in combos:
+            print(f"Testing model with parameters:\n"
+                  f"    Reservoir size: {combo[0]}\n"
+                  f"    Leaking rate: {combo[1]}\n"
+                  f"    Rho: {combo[2]}")
+
+            dirname = "-".join([str(c) for c in combo]).replace(".", "_")
+            full_path = f"{dirpath}/{dirname}"
+
+            if not os.path.exists(full_path):
+                subprocess.run(["mkdir", full_path.replace("/", "\\")], shell=True)
+
+            self.model_params = list(combo) + [64]
+
+            self.cross_validate(n_of_splits=5,
+                                save_results_to_file=f"{full_path}/errors.csv",
+                                save_models_to_dir=full_path)
