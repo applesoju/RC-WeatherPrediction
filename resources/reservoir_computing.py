@@ -10,12 +10,14 @@ class SimpleESN:
 
         self.reservoir_size = None
         self.leaking_rate = None
-
-        self.input_weights = None
         self.reservoir = None
         self.spectral_radius = None
 
+        self.input_weights = None
         self.output_weights = None
+
+        self.training_length = None
+
         self.x_out = None
         self.x_last = None
 
@@ -76,6 +78,8 @@ class SimpleESN:
         self.reservoir *= self.spectral_radius / rho
 
     def train(self, training_length):
+        self.training_length = training_length
+
         x_out = np.zeros((2 + self.reservoir_size, training_length))
         y_target = self.data[None, 1: training_length + 1]
         x = np.zeros((self.reservoir_size, 1))
@@ -97,11 +101,11 @@ class SimpleESN:
         self.x_out = x_out
         self.x_last = x
 
-    def predict(self, test_length, training_length, save_to_file=None):
+    def predict(self, test_length, save_to_file=None):
         print("Model is generating a prediction...")
 
         y_test = np.zeros((1, test_length))
-        u = self.data[training_length]
+        u = self.data[self.training_length]
         x = self.x_last
 
         for t in range(test_length):
@@ -112,7 +116,7 @@ class SimpleESN:
             y_test[:, t] = y
 
             if t + 1 != test_length:
-                u = self.data[training_length + t + 1]
+                u = self.data[self.training_length + t + 1]
 
         if save_to_file is not None:
             try:
@@ -133,7 +137,8 @@ class SimpleESN:
                     "input_weights": self.input_weights.tolist(),
                     "reservoir": self.reservoir.tolist(),
                     "output_weights": self.output_weights.tolist(),
-                    "last_x": self.x_last.tolist()
+                    "last_x": self.x_last.tolist(),
+                    "training_length": self.training_length
                 }
                 json.dump(model_dict, f)
 
@@ -153,6 +158,7 @@ class SimpleESN:
                 self.output_weights = np.array(json_data["output_weights"])
                 self.reservoir = np.array(json_data["reservoir"])
                 self.x_last = np.array(json_data["x_last"])
+                self.training_length = json_data["training_length"]
 
         except OSError as err:
             print(f"Error: {err}\n"
@@ -173,17 +179,17 @@ class SimpleESN:
 
         plt.show()
 
-    def plot_prediction_with_error(self, prediction, training_length, test_length):
+    def plot_prediction_with_error(self, prediction, test_length):
 
-        err = np.square(self.data[training_length + 1:
-                                  training_length + test_length + 1] - prediction[0])
+        err = np.square(self.data[self.training_length + 1:
+                                  self.training_length + test_length + 1] - prediction[0])
         mse = sum(err) / test_length
 
         print(f"MSE: {mse}")
 
         plt.figure(4, figsize=(20, 12)).clear()
-        plt.plot(self.data[training_length + 1:
-                           training_length + test_length + 1], "g")
+        plt.plot(self.data[self.training_length + 1:
+                           self.training_length + test_length + 1], "g")
         plt.plot(prediction.T, "b")
         plt.title("Target and generated signals")
         plt.legend(["Target signal", "Predicted signal"])

@@ -113,6 +113,7 @@ class ModelEvaluation:
         plt.figure(8, figsize=(20, 12)).clear()
         sns.lineplot(self.r2)
         plt.title("R2 Score")
+
         for i, val in enumerate(self.r2):
             label = round(val, 2)
             plt.annotate(label, (i, val))
