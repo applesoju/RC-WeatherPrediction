@@ -36,7 +36,7 @@ class ModelEvaluation:
     def generate_prediction(self, training_length, test_length):
         self.initialize_model()
 
-        last_x = self.model.train(training_length=training_length)
+        self.model.train(training_length=training_length)
         y_pred = self.model.predict(training_length=training_length,
                                     last_x=last_x,
                                     test_length=test_length)
@@ -118,3 +118,6 @@ class ModelEvaluation:
             plt.annotate(label, (i, val))
 
         plt.show()
+
+    def grid_search(self, params):
+        raise NotImplementedError
