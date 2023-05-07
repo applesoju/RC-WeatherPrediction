@@ -8,9 +8,6 @@ class SimpleESN:
     def __init__(self):
         self.data = None
 
-        self.input_size = None
-        self.output_size = None
-
         self.reservoir_size = None
         self.leaking_rate = None
 
@@ -18,8 +15,9 @@ class SimpleESN:
         self.reservoir = None
         self.spectral_radius = None
 
-        self.output_weigths = None
+        self.output_weights = None
         self.x_out = None
+        self.x_last = None
 
     def loadtxt(self, filepath):
         print("Loading data from txt file...")
@@ -61,11 +59,9 @@ class SimpleESN:
 
         plt.show()
 
-    def initialize_reservoir(self, input_size, reservoir_size, leaking_rate, spectral_radius, seed=None):
+    def initialize_reservoir(self, reservoir_size, leaking_rate, spectral_radius, seed=None):
         print("Initializing reservoir...")
 
-        self.input_size = input_size
-        self.output_size = self.input_size
         self.reservoir_size = reservoir_size
         self.leaking_rate = leaking_rate
         self.spectral_radius = spectral_radius
@@ -73,14 +69,14 @@ class SimpleESN:
         if seed is not None:
             np.random.seed(seed)
 
-        self.input_weights = np.random.rand(self.reservoir_size, 1 + input_size) - 0.5
+        self.input_weights = np.random.rand(self.reservoir_size, 2) - 0.5
         self.reservoir = np.random.rand(reservoir_size, reservoir_size) - 0.5
 
         rho = max(abs(np.linalg.eig(self.reservoir)[0]))
         self.reservoir *= self.spectral_radius / rho
 
     def train(self, training_length):
-        x_out = np.zeros((1 + self.input_size + self.reservoir_size, training_length))
+        x_out = np.zeros((2 + self.reservoir_size, training_length))
         y_target = self.data[None, 1: training_length + 1]
         x = np.zeros((self.reservoir_size, 1))
 
@@ -93,27 +89,26 @@ class SimpleESN:
             x_out[:, t] = np.vstack((1, u, x))[:, 0]
 
         reg_coeff = 1e-8
-        self.output_weigths = np.linalg.solve(
-            np.dot(x_out, x_out.T) + reg_coeff * np.eye(1 + self.input_size + self.reservoir_size),
+        self.output_weights = np.linalg.solve(
+            np.dot(x_out, x_out.T) + reg_coeff * np.eye(2 + self.reservoir_size),
             np.dot(x_out, y_target.T)
         ).T
 
         self.x_out = x_out
+        self.x_last = x
 
-        return x
-
-    def predict(self, test_length, training_length, last_x, save_to_file=None):
+    def predict(self, test_length, training_length, save_to_file=None):
         print("Model is generating a prediction...")
 
-        y_test = np.zeros((self.output_size, test_length))
+        y_test = np.zeros((1, test_length))
         u = self.data[training_length]
-        x = last_x
+        x = self.x_last
 
         for t in range(test_length):
             x = (1 - self.leaking_rate) * x + self.leaking_rate * \
                 np.tanh(np.dot(self.input_weights, np.vstack((1, u))) +
                         np.dot(self.reservoir, x))
-            y = np.dot(self.output_weigths, np.vstack((1, u, x)))
+            y = np.dot(self.output_weights, np.vstack((1, u, x)))
             y_test[:, t] = y
 
             if t + 1 != test_length:
@@ -137,7 +132,8 @@ class SimpleESN:
                     "leaking_rate": self.leaking_rate,
                     "input_weights": self.input_weights.tolist(),
                     "reservoir": self.reservoir.tolist(),
-                    "output_weigths": self.output_weigths.tolist()
+                    "output_weights": self.output_weights.tolist(),
+                    "last_x": self.x_last.tolist()
                 }
                 json.dump(model_dict, f)
 
@@ -146,8 +142,22 @@ class SimpleESN:
                   f"The target directory does not exist.\n"
                   f"Skipping saving to file.\n")
 
-    def load_reservoir_from_file(self, filepath):  # TODO
-        raise NotImplementedError
+    def load_reservoir_from_file(self, filepath):
+        print("Loading reservoir from file...")
+        try:
+            with open(filepath, "r") as f:
+                json_data = json.load(f)
+
+                self.input_weights = np.array(json_data["input_weights"])
+                self.leaking_rate = json_data["leaking_rate"]
+                self.output_weights = np.array(json_data["output_weights"])
+                self.reservoir = np.array(json_data["reservoir"])
+                self.x_last = np.array(json_data["x_last"])
+
+        except OSError as err:
+            print(f"Error: {err}\n"
+                  f"The target file does not exist.\n")
+            exit(-102)
 
     def plot_reservoir_activations(self, xlen, ylen):
         plt.figure(2, figsize=(20, 12)).clear()
@@ -156,9 +166,9 @@ class SimpleESN:
 
         plt.show()
 
-    def plot_output_weigths(self):
+    def plot_output_weights(self):
         plt.figure(3, figsize=(20, 12)).clear()
-        plt.bar(np.arange(1 + self.input_size + self.reservoir_size), self.output_weigths[0].T)
+        plt.bar(np.arange(2 + self.reservoir_size), self.output_weights[0].T)
         plt.title("Output weights")
 
         plt.show()
@@ -183,11 +193,10 @@ class SimpleESN:
         plt.subplot(211)
         plt.plot(err)
         plt.yscale("log")
+        plt.title("MSE")
 
         plt.subplot(212)
         plt.plot(err)
         plt.yscale("linear")
-
-        plt.title("MSE")
 
         plt.show()
