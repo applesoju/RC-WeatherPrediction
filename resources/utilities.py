@@ -1,4 +1,5 @@
 import os
+
 import pandas as pd
 
 
@@ -18,6 +19,16 @@ def get_metric_from_gs(path, metric):
     for model in models:
         fullpath = f"{path}/{model}/errors.csv"
         errors_df = pd.read_csv(fullpath)
-        metric_list.append(errors_df["r2"])
+        metric_list.append(errors_df[metric].tolist())
 
-        return
+    metric_df = pd.DataFrame(metric_list, index=models, columns=[str(i) for i in range(len(metric_list[0]))])
+
+    return metric_df
+
+
+def sort_df_by_split(df, split, desc=True):
+    raise NotImplementedError
+
+
+def sortdf_by_mean(df):
+    raise NotImplementedError
