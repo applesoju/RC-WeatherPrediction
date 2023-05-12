@@ -124,7 +124,7 @@ class ModelEvaluation:
         plt.show()
 
     def grid_search(self, params, dirpath):
-        combos = itertools.product(*list(params.values()))
+        combos = list(itertools.product(*list(params.values())))
 
         if not os.path.exists(dirpath):
             raise FileNotFoundError("Directory not found.\n"
@@ -134,7 +134,7 @@ class ModelEvaluation:
             print(f"Testing model with parameters:\n"
                   f"    Reservoir size: {combo[0]}\n"
                   f"    Leaking rate: {combo[1]}\n"
-                  f"    Rho: {combo[2]}")
+                  f"    Rho: {combo[2]}\n")
 
             dirname = "-".join([str(c) for c in combo]).replace(".", "_")
             full_path = f"{dirpath}/{dirname}"
