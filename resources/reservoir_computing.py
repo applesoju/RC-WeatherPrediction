@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 
-class SimpleESN:
+class EchoStateNetwork:
     def __init__(self):
         self.data = None
 
