@@ -27,7 +27,7 @@ def get_metric_from_gs(path, metric):
 
 
 def sort_df_by_split(df, split, desc=True, get_best=None):
-    sorted_df = df.sort_values(by=[*split], ascending=not desc)
+    sorted_df = df.sort_values(by=[str(split)], ascending=not desc)
 
     if get_best is not None:
         sorted_df = sorted_df.head(get_best)
@@ -49,3 +49,34 @@ def sort_df_by_mean(df, desc=True, get_best=None):
         sorted_df = sorted_df.head(get_best)
 
     return sorted_df
+
+
+def rank_models(df, n_of_models, n_of_splits):
+    model_dict = {}
+    best_from_means = sort_df_by_mean(df, True, 5)
+
+    points = 5
+    for idx, row in best_from_means.iterrows():
+        model_dict[idx] = points
+        points -= 1
+
+    for s in range(1, n_of_splits + 1):
+        best_from_split = sort_df_by_split(df, s, True, 5)
+
+        points = 5
+        for idx, row in best_from_split.iterrows():
+            if idx not in model_dict:
+                model_dict[idx] = points
+
+            else:
+                model_dict[idx] += points
+
+            points -= 1
+
+    model_list = sorted(model_dict, key=lambda k: model_dict[k], reverse=True)
+
+    print(f"Best {n_of_models} models:\n")
+    for model in model_list[:n_of_models]:
+        print(f"    {model}")
+
+    return model_list[:n_of_models]
