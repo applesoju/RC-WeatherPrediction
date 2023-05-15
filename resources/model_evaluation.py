@@ -1,6 +1,7 @@
 import itertools
 import os.path
 import subprocess
+import time
 
 import matplotlib.pyplot as plt
 import pandas as pd
@@ -147,3 +148,80 @@ class ModelEvaluation:
             self.cross_validate(n_of_splits=5,
                                 save_results_to_file=f"{full_path}/errors.csv",
                                 save_models_to_dir=full_path)
+
+    def variable_params_test(self, params, dirpath):
+        rs_const, lr_const, rho_const = self.model_params
+
+        if not os.path.exists(dirpath):
+            raise FileNotFoundError("Directory not found.\n"
+                                    "Aborting test.")
+
+        rs_var = [params["reservoir_sizes"], [lr_const], [rho_const]]
+        rs_combos = list(itertools.product(*rs_var))
+
+        lr_var = [[rs_const], params["leaking_rates"], [rho_const]]
+        lr_combos = list(itertools.product(*lr_var))
+
+        rho_var = [[rs_const], [lr_const], params["spectral_radiuses"]]
+        rho_combos = list(itertools.product(*rho_var))
+
+        for rsc in rs_combos:
+            print(f"Testing model with constants:\n"
+                  f"    Leaking rate: {rsc[1]}\n"
+                  f"    Rho: {rsc[2]}\n"
+                  f"And variable reservoir size: {rsc[0]}")
+
+            dirname = f"var_reservoir-size/{str(rsc[0])}"
+            full_path = f"{dirpath}/{dirname}"
+            if not os.path.exists(full_path):
+                subprocess.run(["mkdir", full_path.replace("/", "\\")], shell=True)
+
+            self.model_params = list(rsc) + [64]
+
+            start_time = time.time()
+
+            self.cross_validate(n_of_splits=5,
+                                save_results_to_file=f"{full_path}/metrics.csv",
+                                save_models_to_dir=full_path)
+
+            end_time = time.time()
+            elapsed = end_time - start_time
+
+            with open(f"{full_path}/time.txt", "w") as f:
+                f.write(str(elapsed))
+
+        for lrc in lr_combos:
+            print(f"Testing model with constants:\n"
+                  f"    Reservoir size: {lrc[0]}\n"
+                  f"    Rho: {lrc[2]}\n"
+                  f"And variable leaking rate: {lrc[1]}")
+
+            dirname = f"var_leaking-rate/{str(lrc[1]).replace('.', '_')}"
+            full_path = f"{dirpath}/{dirname}"
+            if not os.path.exists(full_path):
+                subprocess.run(["mkdir", full_path.replace("/", "\\")], shell=True)
+
+            self.model_params = list(lrc) + [64]
+
+            self.cross_validate(n_of_splits=5,
+                                save_results_to_file=f"{full_path}/metrics.csv",
+                                save_models_to_dir=full_path)
+
+        for rhoc in rho_combos:
+            print(f"Testing model with constants:\n"
+                  f"    Reservoir size: {rhoc[0]}\n"
+                  f"    Leaking rate: {rhoc[1]}\n"
+                  f"And variable spectral radius: {rhoc[2]}")
+
+            dirname = f"var_spectral-radius/{str(rhoc[2]).replace('.', '_')}"
+            full_path = f"{dirpath}/{dirname}"
+            if not os.path.exists(full_path):
+                subprocess.run(["mkdir", full_path.replace("/", "\\")], shell=True)
+
+            self.model_params = list(rhoc) + [64]
+
+            self.cross_validate(n_of_splits=5,
+                                save_results_to_file=f"{full_path}/metrics.csv",
+                                save_models_to_dir=full_path)
+
+        return
